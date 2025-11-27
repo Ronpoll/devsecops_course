@@ -1,40 +1,47 @@
 #!/bin/bash
 
 set -euo pipefail
-# "This line makes Bash behave more safely:
-# -e → exit if any command fails
-# -u → exit if you use an undefined variable
-# -o pipefail → pipelines fail if any command inside fails, not just the last one
-# This prevents many subtle bugs."
+# -e: exit on any command failure
+# -u: treat unset variables as errors
+# -o pipefail: fail a pipeline if any part fails
 
-# 1) Check argument
-if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <syslog_file>"
-  exit 1
-fi
+# Validate input file
+validate_input() {
+  if [[ $# -lt 1 ]]; then
+    echo "Usage: $0 <syslog_file>"
+    exit 1
+  fi
 
-LOG_FILE="$1"
+  LOG_FILE="$1"
 
-if [[ ! -r "$LOG_FILE" ]]; then
-  echo "File '$LOG_FILE' is not readable"
-  exit 1
-fi
+  if [[ ! -r "$LOG_FILE" ]]; then
+    echo "File '$LOG_FILE' is not readable"
+    exit 1
+  fi
+}
 
-# 2) Define the keywords we care about
-KEYWORDS=("ERROR" "WARNING" "FATAL" "CRITICAL" "FAIL" "PANIC" "ALERT" "SEVERE")
+# Keyword list
+keywords() {
+  KEYWORDS=("ERROR" "WARNING" "FATAL" "CRITICAL" "FAIL" "PANIC" "ALERT" "SEVERE")
+}
 
-# 3) Per-IP statistics
-declare -A IP_COUNTS     # how many lines per IP
-declare -A IP_KEYWORDS   # which keywords appeared per IP (as a string)
-
+# Associative arrays for IP statistics
+ip_storage() {
+  declare -Ag IP_COUNTS     # how many lines per IP
+  declare -Ag IP_KEYWORDS   # which keywords appeared per IP (as a string)
+}
 
 # Function: given a line, print the first IP address found (or nothing)
 find_ip_in_line() {
   local line="$1"
-  # This regex is "good enough" for IPv4 in logs
   local ip
 
+<<<<<<< HEAD
+  ip=$(grep -Eo '\b((25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\b' \
+        <<< "$line" | head -n 1 || true)
+=======
   ip=$(grep -Eo '\b((25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\b' <<< "$line" | head -n 1 || true)
+>>>>>>> 4a5b39339df965e2747a5a5e2df36281d9a7138a
 
   if [[ -n "$ip" ]]; then
     echo "$ip"
@@ -59,60 +66,72 @@ find_keywords_in_line() {
   fi
 }
 
-# 4) Process the log file
-while IFS= read -r line; do
-  # a) find IP in this line
-  ip=$(find_ip_in_line "$line" || true)
-  [[ -z "$ip" ]] && continue   # no IP, skip line
+# Process the log file
+process_log_file() {
+  local file="$1"
 
-  # b) find keywords in this line
-  kws=$(find_keywords_in_line "$line" || true)
-  [[ -z "$kws" ]] && continue  # no relevant keywords, skip
+  while IFS= read -r line; do
+    # a) find IP in this line
+    ip=$(find_ip_in_line "$line" || true)
+    [[ -z "$ip" ]] && continue   # no IP, skip line
 
-  # c) update count for this IP
-  current_count=${IP_COUNTS["$ip"]:-0}
-  IP_COUNTS["$ip"]=$(( current_count + 1 ))
+    # b) find keywords in this line
+    kws=$(find_keywords_in_line "$line" || true)
+    [[ -z "$kws" ]] && continue  # no relevant keywords, skip
 
-  # d) update keyword list for this IP (avoid duplicates)
-  for kw in $kws; do
-    # if this keyword is not yet in the string, append it
-    existing="${IP_KEYWORDS[$ip]:-}"
-    if [[ " $existing " != *" $kw "* ]]; then
-      IP_KEYWORDS["$ip"]="$existing $kw"
-    fi
-  done
+    # c) update count for this IP
+    current_count=${IP_COUNTS["$ip"]:-0}
+    IP_COUNTS["$ip"]=$(( current_count + 1 ))
 
-done < "$LOG_FILE"
+    # d) update keyword list for this IP (avoid duplicates)
+    for kw in $kws; do
+      existing="${IP_KEYWORDS[$ip]:-}"
+      if [[ " $existing " != *" $kw "* ]]; then
+        IP_KEYWORDS["$ip"]="$existing $kw"
+      fi
+    done
 
-# 5) Create a timestamped report file name
-DATE_PART=$(date '+%d-%b-%Y_%H-%M' | tr 'A-Z' 'a-z')  # e.g. 27-nov-2025_15-35
-REPORT_FILE="report-${DATE_PART}.rep"
+  done < "$file"
+}
 
-# 6) Write the report
-{
-  echo "*******************************************************************************"
-  echo "Report created at $(date +%H:%M)"
-  echo
+# Generate timestamped report and print it
+generate_and_write_report() {
+  # Create timestamped report filename
+  local DATE_PART
+  DATE_PART=$(date '+%d-%b-%Y_%H-%M' | tr 'A-Z' 'a-z')
+  REPORT_FILE="report-${DATE_PART}.rep"
 
-  for ip in "${!IP_COUNTS[@]}"; do
-    count=${IP_COUNTS[$ip]}
-    kws=${IP_KEYWORDS[$ip]}
-
-        # Clean up leading/trailing spaces in keywords
-    kws=$(echo "$kws" | xargs)
-
-    # Convert space-separated keywords to "A, B, C" format
-    kws=${kws// /, }
-
-    echo "${ip} address appeared in ${count} lines."
-    echo "keywords appeared: ${kws}"
+  {
+    echo "*******************************************************************************"
+    echo "Report created at $(date +%H:%M)"
     echo
-  done
 
-  echo "*******************************************************************************"
-} > "$REPORT_FILE"
+    for ip in "${!IP_COUNTS[@]}"; do
+      count=${IP_COUNTS[$ip]}
+      kws=${IP_KEYWORDS[$ip]}
 
-# 7) Show the report
-echo "file name: $REPORT_FILE"
-cat "$REPORT_FILE"
+      # Trim whitespace
+      kws=$(echo "$kws" | xargs)
 
+      # Convert "A B C" → "A, B, C"
+      kws=${kws// /, }
+
+      echo "${ip} address appeared in ${count} lines."
+      echo "keywords appeared: ${kws}"
+      echo
+    done
+
+    echo "*******************************************************************************"
+  } > "$REPORT_FILE"
+
+  echo "file name: $REPORT_FILE"
+  cat "$REPORT_FILE"
+}
+
+# --------- Main flow ---------
+
+validate_input "$@"
+keywords
+ip_storage
+process_log_file "$LOG_FILE"
+generate_and_write_report
