@@ -23,7 +23,7 @@ if [[ ! -r "$LOG_FILE" ]]; then
 fi
 
 # 2) Define the keywords we care about
-KEYWORDS=("ERROR" "WARNING" "FATAL" "CRITICAL")
+KEYWORDS=("ERROR" "WARNING" "FATAL" "CRITICAL" "FAIL" "PANIC" "ALERT" "SEVERE")
 
 # 3) Per-IP statistics
 declare -A IP_COUNTS     # how many lines per IP
@@ -43,7 +43,7 @@ find_ip_in_line() {
   fi
 }
 
-# Function: given a line, print all matching keywords (space-separated)
+# Function: given a line, print all matching keywords (space separated)
 find_keywords_in_line() {
   local line="$1"
   local found=()
@@ -100,8 +100,11 @@ REPORT_FILE="report-${DATE_PART}.rep"
     count=${IP_COUNTS[$ip]}
     kws=${IP_KEYWORDS[$ip]}
 
-    # Clean up leading/trailing spaces in keywords
+        # Clean up leading/trailing spaces in keywords
     kws=$(echo "$kws" | xargs)
+
+    # Convert space-separated keywords to "A, B, C" format
+    kws=${kws// /, }
 
     echo "${ip} address appeared in ${count} lines."
     echo "keywords appeared: ${kws}"
