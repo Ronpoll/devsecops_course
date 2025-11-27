@@ -34,7 +34,7 @@ find_ip_in_line() {
   # This regex is "good enough" for IPv4 in logs
   local ip
 
-  ip=$(grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' <<< "$line" | head -n 1 || true)
+  ip=$(grep -Eo '\b((25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\b' <<< "$line" | head -n 1 || true)
 
   if [[ -n "$ip" ]]; then
     echo "$ip"
