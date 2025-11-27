@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# "Tells the operating system to run this script using the **bash** interpreter.
-# `env` finds `bash` even if it's in a non-standard location."
 
 set -euo pipefail
 # "This line makes Bash behave more safely:
