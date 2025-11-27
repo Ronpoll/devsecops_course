@@ -21,12 +21,12 @@ validate_input() {
 }
 
 # Keyword list
-keywords() {
+error_keyword_list() {
   KEYWORDS=("ERROR" "WARNING" "FATAL" "CRITICAL" "FAIL" "PANIC" "ALERT" "SEVERE")
 }
 
 # Associative arrays for IP statistics
-ip_storage() {
+create_ip_variables() {
   declare -Ag IP_COUNTS     # how many lines per IP
   declare -Ag IP_KEYWORDS   # which keywords appeared per IP (as a string)
 }
@@ -91,7 +91,7 @@ process_log_file() {
 }
 
 # Generate timestamped report and print it
-generate_and_write_report() {
+create_report() {
   # Create timestamped report filename
   local DATE_PART
   DATE_PART=$(date '+%d-%b-%Y_%H-%M' | tr 'A-Z' 'a-z')
@@ -126,9 +126,9 @@ generate_and_write_report() {
 
 # --------- Main flow ---------
 validate_input "$@"
-keywords
-ip_storage
+error_keyword_list
+create_ip_variables
 process_log_file "$LOG_FILE"
-generate_and_write_report
+create_report
 
 
