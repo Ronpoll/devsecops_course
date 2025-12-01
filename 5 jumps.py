@@ -1,4 +1,8 @@
-num = 0
-while num < 100:
+num = 5
+print (f"First num is {num}")
+while num < 45:
     num+=5
-    print(f"num = {num}")
+    print(f"Next num is {num}")
+num+=5
+print(f"Last num is {num}")
+
