@@ -1,30 +1,4 @@
-"""
--English
--lowercase
 
-funcs:
-- create and return a new random key.
-- convert an existing key (make a decryption key from an encryption key)
-  accepts an encryption key and returns a decryption key
-- encrypt/decrypt:
-        Accepts: 1 - text  2 -key
-        returns: new text
-- test_all:
-creates a key
-encrypts some text
-convert the key
-decrypts the text
-
-ONE LINE CALLS THE test_all func.
-
-Encryption Key:
-a b c d e f g h i j k l m n o p q r s t u v w x y z
-p f g a m     y       x     j
-
-Decryption Key:
-a b c d e f g h i j k l m n o p q r s t u v w x y z
-d         b c     o     e     a               l h
-"""
 import random
 from random import shuffle
 
@@ -35,7 +9,6 @@ def create_encryption_key():
     encryption_key = {}
     for i in range(len(abc_list)):
         encryption_key[abc_list[i]] = abc_list2[i]
-    encryption_key[" "] = " " # This line makes using SPACE possible. creating the possibility to use more than 1 word.
 
     return encryption_key
 
@@ -51,8 +24,12 @@ def create_decryption_key(encryption_key):
 
 def encoded_text(key, string):
     new_word=""
+    misc_list = [' ', '.', ',', '?', '!', '(', ')','-',':']
     for letter in string:
-        new_word += key[letter]
+        if letter in misc_list:
+            new_word += letter
+        else:
+            new_word += key[letter.lower()]
 
     return new_word
 
@@ -61,14 +38,16 @@ def execute_func():
     encryption_key = create_encryption_key()
     decryption_key = create_decryption_key(encryption_key)
     print("Welcome to the text encryption program!\n")
+
     def menu():
-        text =input("Press 'e' to see the Encryption key.\n"
+        choice =input("Press 'e' to see the Encryption key.\n"
                          "Press 'd' to see the Decryption key.\n"
                            "Press 'g' to generate a new pair of Encryption/Decryption keys.\n"
-                           "Press 't' to write a text. you will see the Encrypted text.\n"
+                           "Press 't' to write a text. you will later choose to encrypt or decrypt it.\n"
                           "Press 'q' to quit the program.\n"
                           "Your Choice: ").lower()
-        return text
+        return choice
+
     user_input = menu()
     while user_input != 'q':
         if user_input == 'e':
@@ -83,8 +62,19 @@ def execute_func():
             print("New Encryption and Decryption keys generated successfully!\n")
             user_input = menu()
         elif user_input == 't':
-            encrypted_text= encoded_text(encryption_key, string=input("Please write a text in english, only lowercase letters: "))
-            print(encrypted_text)
-            user_input = menu()
+            enc_dec = input("Press 'e' to Encrypt text.\n"
+                            "Press 'd' to Decrypt text.\n"
+                            "Your Choice: ")
+            if enc_dec == 'e':
+                encrypted_text= encoded_text(encryption_key, string=input("Please write a text to encrypt: "))
+                print('\n'+encrypted_text+'\n')
+                user_input = menu()
+            elif enc_dec == 'd':
+                encrypted_text = encoded_text(decryption_key, string=input("Please write a text to decrypt: "))
+                print('\n'+encrypted_text+'\n')
+                user_input = menu()
+            else:
+                print("Please try again.")
+                continue
 
 execute_func()
