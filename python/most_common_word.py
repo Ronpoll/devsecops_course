@@ -1,10 +1,15 @@
 
+
 def read_book(book):
-    file1 = open(book, encoding='utf8').read()
-    clean_book = file1.lower().replace('\n', " ").strip('.'+','+':'+'!'+'@'+'#'+'$'+'%'+'^'+'&'+'*'+'('+')'+'-'+'+'+'='+'—'+'?'+'_'+'”').split()
-    return  clean_book
+    book = open(book, encoding='utf8').read()
+    return book
 
-
+def clean_book(book):
+    cleaned = book.lower().split()
+    for i in range(len(cleaned)):
+        word = cleaned[i].strip('.,:!@#$%^&*()-+=—?_”;“')
+        cleaned[i] = word
+    return  cleaned
 
 def most_common_word (book):
     word_counter = {}
@@ -27,8 +32,8 @@ def most_common_word (book):
 
 def main(book_to_check):
     book = read_book(book_to_check)
-    print(most_common_word(book))
+    cleaned = clean_book(book)
+    print(most_common_word(cleaned))
+
 
 main('Alice in Wonderland.txt')
-
-
