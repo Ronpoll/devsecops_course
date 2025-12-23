@@ -1,7 +1,7 @@
 
 def read_book(book):
     file1 = open(book, encoding='utf8').read()
-    clean_book = file1.replace('\n', " ").strip('.'+','+':'+'!'+'@'+'#'+'$'+'%'+'^'+'&'+'*'+'('+')'+'-'+'+'+'='+'—'+'?'+'_'+'”').split()
+    clean_book = file1.lower().replace('\n', " ").strip('.'+','+':'+'!'+'@'+'#'+'$'+'%'+'^'+'&'+'*'+'('+')'+'-'+'+'+'='+'—'+'?'+'_'+'”').split()
     return  clean_book
 
 
